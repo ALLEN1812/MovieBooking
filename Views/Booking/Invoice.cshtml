@@ -1,0 +1,126 @@
+@model OnlineMovieBooking.Models.Booking
+@{
+    ViewData["Title"] = $"Hoá đơn #{Model.Id}";
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <title>Hoá đơn #@Model.Id - MovieBooking</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; font-size: 13px; color: #222; background: #f5f5f5; }
+        .page { max-width: 680px; margin: 30px auto; background: #fff; padding: 40px; border-radius: 10px; box-shadow: 0 2px 16px rgba(0,0,0,.10); }
+        .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #e74c3c; padding-bottom: 20px; margin-bottom: 24px; }
+        .brand { font-size: 22px; font-weight: 800; color: #e74c3c; }
+        .brand span { display: block; font-size: 12px; font-weight: 400; color: #888; margin-top: 2px; }
+        .invoice-meta { text-align: right; }
+        .invoice-meta h2 { font-size: 18px; font-weight: 700; color: #333; }
+        .invoice-meta p { font-size: 12px; color: #666; margin-top: 4px; }
+        .status-badge { display: inline-block; padding: 3px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; margin-top: 6px; }
+        .status-confirmed { background: #d4edda; color: #155724; }
+        .status-pending { background: #fff3cd; color: #856404; }
+        .section { margin-bottom: 24px; }
+        .section-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #999; margin-bottom: 10px; border-bottom: 1px solid #eee; padding-bottom: 6px; }
+        .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .info-item label { display: block; font-size: 11px; color: #888; margin-bottom: 2px; }
+        .info-item span { font-weight: 600; }
+        table { width: 100%; border-collapse: collapse; }
+        th { background: #f8f8f8; text-align: left; padding: 8px 10px; font-size: 11px; text-transform: uppercase; color: #666; border-bottom: 2px solid #eee; }
+        td { padding: 10px; border-bottom: 1px solid #f0f0f0; font-size: 13px; }
+        .seat-badge { display: inline-block; background: #333; color: #fff; border-radius: 4px; padding: 2px 7px; font-size: 11px; margin: 1px; }
+        .seat-vip { background: #f0a500; color: #fff; }
+        .total-row td { font-weight: 700; font-size: 15px; border-top: 2px solid #eee; border-bottom: none; }
+        .total-row .amount { color: #e74c3c; font-size: 18px; }
+        .footer { margin-top: 32px; padding-top: 16px; border-top: 1px dashed #ddd; text-align: center; font-size: 11px; color: #aaa; }
+        .print-btn { display: block; margin: 20px auto 0; padding: 10px 28px; background: #e74c3c; color: #fff; border: none; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer; }
+        @@media print {
+            body { background: #fff; }
+            .page { box-shadow: none; margin: 0; border-radius: 0; }
+            .no-print { display: none !important; }
+        }
+    </style>
+</head>
+<body>
+<div class="page">
+    <div class="header">
+        <div class="brand">
+            🎬 MovieBooking
+            <span>Hệ thống đặt vé xem phim trực tuyến</span>
+        </div>
+        <div class="invoice-meta">
+            <h2>HOÁ ĐƠN</h2>
+            <p>Mã đặt vé: <strong>#@Model.Id</strong></p>
+            <p>Ngày: @Model.CreatedAt.ToString("dd/MM/yyyy HH:mm")</p>
+            <span class="status-badge @(Model.Status == "confirmed" ? "status-confirmed" : "status-pending")">
+                @(Model.Status == "confirmed" ? "Đã xác nhận" : "Chờ xác nhận")
+            </span>
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="section-title">Thông tin khách hàng</div>
+        <div class="info-grid">
+            <div class="info-item"><label>Họ tên</label><span>@Model.Name</span></div>
+            <div class="info-item"><label>Số điện thoại</label><span>@Model.Phone</span></div>
+            <div class="info-item"><label>Email</label><span>@Model.Email</span></div>
+            <div class="info-item"><label>Phương thức thanh toán</label><span>@Model.PaymentMethod</span></div>
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="section-title">Thông tin suất chiếu</div>
+        <div class="info-grid">
+            <div class="info-item"><label>Phim</label><span>@Model.Showtime?.Movie?.Title</span></div>
+            <div class="info-item"><label>Thời gian</label><span>@Model.Showtime?.StartTime.ToString("HH:mm - dd/MM/yyyy")</span></div>
+            <div class="info-item"><label>Rạp chiếu</label><span>@Model.Showtime?.Room?.Cinema?.Name</span></div>
+            <div class="info-item"><label>Phòng chiếu</label><span>@Model.Showtime?.Room?.Name</span></div>
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="section-title">Chi tiết vé</div>
+        <table>
+            <thead>
+                <tr>
+                    <th>Ghế</th>
+                    <th>Loại</th>
+                    <th style="text-align:right">Đơn giá</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var d in Model.BookingDetails)
+                {
+                    <tr>
+                        <td><span class="seat-badge @(d.Seat?.Type == "vip" ? "seat-vip" : "")">@(d.Seat?.RowLabel)@(d.Seat?.ColNumber)</span></td>
+                        <td>@(d.Seat?.Type == "vip" ? "VIP" : "Thường")</td>
+                        <td style="text-align:right">@d.Price.ToString("N0") ₫</td>
+                    </tr>
+                }
+                <tr class="total-row">
+                    <td colspan="2">Tổng cộng (@Model.BookingDetails.Count ghế)</td>
+                    <td style="text-align:right" class="amount">@Model.TotalPrice.ToString("N0") ₫</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    @if (!string.IsNullOrEmpty(Model.Note) && !Model.Note.StartsWith("TxnID:"))
+    {
+        <div class="section">
+            <div class="section-title">Ghi chú</div>
+            <p>@Model.Note</p>
+        </div>
+    }
+
+    <div class="footer">
+        <p>Cảm ơn bạn đã sử dụng dịch vụ của MovieBooking!</p>
+        <p>Mọi thắc mắc vui lòng liên hệ hotline 0394945853 hoặc email support@moviebooking.vn</p>
+        <p style="margin-top:6px;">Hoá đơn được xuất lúc @DateTime.Now.ToString("HH:mm dd/MM/yyyy")</p>
+    </div>
+
+    <button class="print-btn no-print" onclick="window.print()">🖨️ In / Lưu PDF</button>
+</div>
+</body>
+</html>

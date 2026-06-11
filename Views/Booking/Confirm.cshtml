@@ -1,0 +1,139 @@
+@model BookingConfirmViewModel
+@{
+    ViewData["Title"] = "Xác nhận đặt vé";
+}
+
+<div class="bg-dark text-white py-3">
+    <div class="container">
+        <h5 class="mb-0 fw-bold"><i class="bi bi-ticket me-2"></i>Xác nhận đặt vé</h5>
+    </div>
+</div>
+
+<div class="container py-4">
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger">@TempData["Error"]</div>
+    }
+
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <form method="post" asp-action="Confirm" asp-controller="Booking">
+                @foreach (var id in Model.SeatIds)
+                {
+                    <input type="hidden" name="SeatIds" value="@id" />
+                }
+                <input type="hidden" asp-for="ShowtimeId" />
+
+                <!-- Contact Info -->
+                <div class="card shadow-sm border-0 mb-3">
+                    <div class="card-body">
+                        <h6 class="fw-bold mb-3 border-bottom pb-2"><i class="bi bi-person me-2"></i>Thông tin liên hệ</h6>
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 small"></div>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label asp-for="Name" class="form-label fw-semibold">Họ tên</label>
+                                <input asp-for="Name" class="form-control" placeholder="Nguyễn Văn A" />
+                                <span asp-validation-for="Name" class="text-danger small"></span>
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="Phone" class="form-label fw-semibold">Số điện thoại</label>
+                                <input asp-for="Phone" class="form-control" type="tel" placeholder="0901234567" />
+                                <span asp-validation-for="Phone" class="text-danger small"></span>
+                            </div>
+                            <div class="col-12">
+                                <label asp-for="Email" class="form-label fw-semibold">Email</label>
+                                <input asp-for="Email" class="form-control" placeholder="email@example.com" />
+                                <span asp-validation-for="Email" class="text-danger small"></span>
+                            </div>
+                            <div class="col-12">
+                                <label asp-for="Note" class="form-label fw-semibold">Ghi chú <span class="text-muted">(tùy chọn)</span></label>
+                                <textarea asp-for="Note" class="form-control" rows="2" placeholder="Yêu cầu đặc biệt..."></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Payment Method -->
+                <div class="card shadow-sm border-0 mb-3">
+                    <div class="card-body">
+                        <h6 class="fw-bold mb-3 border-bottom pb-2"><i class="bi bi-credit-card me-2"></i>Phương thức thanh toán</h6>
+                        <div class="row g-2">
+                            @foreach (var (method, label, icon) in new[] { ("COD","Tiền mặt tại quầy","bi-cash-coin"), ("MoMo","MoMo (QR)","bi-qr-code-scan") })
+                            {
+                                <div class="col-md-6">
+                                    <label class="payment-option border rounded p-3 d-block cursor-pointer">
+                                        <input type="radio" asp-for="PaymentMethod" value="@method" class="d-none payment-radio" />
+                                        <div class="text-center">
+                                            <i class="bi @icon fs-3 mb-1 d-block"></i>
+                                            <strong>@label</strong>
+                                        </div>
+                                    </label>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-danger btn-lg w-100 py-3 fw-bold">
+                    <i class="bi bi-check-circle me-2"></i>Xác nhận đặt vé - @Model.TotalPrice.ToString("N0") ₫
+                </button>
+            </form>
+        </div>
+
+        <!-- Order Summary -->
+        <div class="col-lg-4">
+            <div class="card shadow-sm border-0 sticky-top" style="top:80px;">
+                <div class="card-body">
+                    <h6 class="fw-bold mb-3 border-bottom pb-2">Tóm tắt đơn hàng</h6>
+                    @if (Model.Showtime != null)
+                    {
+                        <div class="mb-3">
+                            <strong>@Model.Showtime.Movie.Title</strong>
+                            <div class="text-muted small mt-1">
+                                <div><i class="bi bi-clock me-1"></i>@Model.Showtime.StartTime.ToString("HH:mm - dd/MM/yyyy")</div>
+                                <div><i class="bi bi-building me-1"></i>@Model.Showtime.Room.Name | @Model.Showtime.Room.Cinema.Name</div>
+                            </div>
+                        </div>
+                    }
+
+                    <div class="mb-3">
+                        <strong class="small d-block mb-2">Ghế đã chọn:</strong>
+                        @foreach (var seat in Model.SelectedSeats)
+                        {
+                            <div class="d-flex justify-content-between text-sm mb-1">
+                                <span>
+                                    <span class="badge @(seat.Type == "vip" ? "bg-warning text-dark" : "bg-secondary") me-1">@seat.Label</span>
+                                    @(seat.Type == "vip" ? "VIP" : "Thường")
+                                </span>
+                                <span class="fw-semibold">@seat.Price.ToString("N0") ₫</span>
+                            </div>
+                        }
+                    </div>
+
+                    <div class="border-top pt-2">
+                        <div class="d-flex justify-content-between fw-bold fs-5">
+                            <span>Tổng cộng:</span>
+                            <span class="text-danger">@Model.TotalPrice.ToString("N0") ₫</span>
+                        </div>
+                        <small class="text-muted">(@Model.SelectedSeats.Count ghế)</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.querySelectorAll('.payment-radio').forEach(radio => {
+            radio.addEventListener('change', () => {
+                document.querySelectorAll('.payment-option').forEach(el => el.classList.remove('border-danger', 'bg-danger', 'bg-opacity-10'));
+                if (radio.checked) radio.closest('.payment-option').classList.add('border-danger', 'bg-danger', 'bg-opacity-10');
+            });
+        });
+        // Init
+        const checked = document.querySelector('.payment-radio:checked');
+        if (checked) checked.closest('.payment-option').classList.add('border-danger', 'bg-danger', 'bg-opacity-10');
+    </script>
+    <partial name="_ValidationScriptsPartial" />
+}

@@ -1,0 +1,77 @@
+@model BookingSuccessViewModel
+@{
+    ViewData["Title"] = "Đặt vé thành công";
+}
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-7">
+            <div class="card shadow border-0 rounded-3 text-center p-4">
+                <div class="mb-3">
+                    <div class="rounded-circle bg-success bg-opacity-10 d-inline-flex align-items-center justify-content-center mb-3" style="width:80px;height:80px;">
+                        <i class="bi bi-check-circle-fill text-success" style="font-size:2.5rem;"></i>
+                    </div>
+                    <h3 class="fw-bold">Đặt vé thành công!</h3>
+                    <p class="text-muted">Mã đặt vé: <strong class="text-danger">#@Model.BookingId</strong></p>
+                </div>
+
+                <div class="card bg-light border-0 p-3 text-start mb-3">
+                    <div class="row g-2">
+                        <div class="col-6">
+                            <small class="text-muted d-block">Phim</small>
+                            <strong>@Model.MovieTitle</strong>
+                        </div>
+                        <div class="col-6">
+                            <small class="text-muted d-block">Suất chiếu</small>
+                            <strong>@Model.ShowtimeStart.ToString("HH:mm - dd/MM/yyyy")</strong>
+                        </div>
+                        <div class="col-6">
+                            <small class="text-muted d-block">Rạp</small>
+                            <strong>@Model.CinemaName</strong>
+                        </div>
+                        <div class="col-6">
+                            <small class="text-muted d-block">Phòng</small>
+                            <strong>@Model.RoomName</strong>
+                        </div>
+                        <div class="col-12">
+                            <small class="text-muted d-block">Ghế</small>
+                            <div class="d-flex flex-wrap gap-1 mt-1">
+                                @foreach (var seat in Model.SeatLabels)
+                                {
+                                    <span class="badge bg-dark">@seat</span>
+                                }
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <small class="text-muted d-block">Thanh toán</small>
+                            <strong>@Model.PaymentMethod</strong>
+                        </div>
+                        <div class="col-6">
+                            <small class="text-muted d-block">Trạng thái</small>
+                            <span class="badge bg-warning text-dark">Chờ xác nhận</span>
+                        </div>
+                        <div class="col-12 border-top pt-2">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="fw-bold fs-5">Tổng tiền:</span>
+                                <span class="fw-bold fs-4 text-danger">@Model.TotalPrice.ToString("N0") ₫</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex gap-2 justify-content-center flex-wrap">
+                    <a asp-controller="Booking" asp-action="Invoice" asp-route-id="@Model.BookingId"
+                       class="btn btn-outline-danger" target="_blank">
+                        <i class="bi bi-file-earmark-text me-1"></i>Xuất hoá đơn
+                    </a>
+                    <a asp-controller="Profile" asp-action="Bookings" class="btn btn-outline-secondary">
+                        <i class="bi bi-ticket me-1"></i>Lịch sử đặt vé
+                    </a>
+                    <a asp-controller="Home" asp-action="Index" class="btn btn-danger">
+                        <i class="bi bi-house me-1"></i>Về trang chủ
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

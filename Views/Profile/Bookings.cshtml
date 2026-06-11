@@ -1,0 +1,95 @@
+@model List<Booking>
+@{
+    ViewData["Title"] = "Lịch sử đặt vé";
+}
+
+<div class="container py-4">
+    <h4 class="fw-bold mb-4">Lịch sử đặt vé</h4>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show">@TempData["Success"]<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show">@TempData["Error"]<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
+    }
+
+    @if (!Model.Any())
+    {
+        <div class="text-center py-5">
+            <i class="bi bi-ticket text-muted" style="font-size:4rem;"></i>
+            <h5 class="mt-3 text-muted">Chưa có lịch sử đặt vé</h5>
+            <a asp-controller="Movies" asp-action="Index" class="btn btn-danger mt-2">Xem phim ngay</a>
+        </div>
+    }
+    else
+    {
+        <div class="row g-3">
+            @foreach (var booking in Model)
+            {
+                var statusClass = booking.Status switch { "confirmed" => "success", "cancelled" => "danger", _ => "warning" };
+                var statusText = booking.Status switch { "confirmed" => "Đã xác nhận", "cancelled" => "Đã hủy", _ => "Chờ xác nhận" };
+
+                <div class="col-12">
+                    <div class="card shadow-sm border-0">
+                        <div class="card-body">
+                            <div class="row align-items-center g-3">
+                                <div class="col-md-1 text-center">
+                                    @if (!string.IsNullOrEmpty(booking.Showtime?.Movie?.PosterUrl))
+                                    {
+                                        <img src="@booking.Showtime.Movie.PosterUrl" class="rounded" style="width:50px;height:70px;object-fit:cover;" onerror="this.src='/images/no-poster.jpg'" />
+                                    }
+                                    else
+                                    {
+                                        <div class="bg-secondary rounded d-flex align-items-center justify-content-center" style="width:50px;height:70px;"><i class="bi bi-film text-white"></i></div>
+                                    }
+                                </div>
+                                <div class="col-md-5">
+                                    <h6 class="fw-bold mb-1">@booking.Showtime?.Movie?.Title</h6>
+                                    <small class="text-muted d-block"><i class="bi bi-clock me-1"></i>@booking.Showtime?.StartTime.ToString("HH:mm - dd/MM/yyyy")</small>
+                                    <small class="text-muted d-block"><i class="bi bi-building me-1"></i>@booking.Showtime?.Room?.Name | @booking.Showtime?.Room?.Cinema?.Name</small>
+                                    <div class="mt-1">
+                                        @foreach (var detail in booking.BookingDetails)
+                                        {
+                                            <span class="badge @(detail.Seat?.Type == "vip" ? "bg-warning text-dark" : "bg-secondary") me-1">
+                                                @(detail.Seat?.RowLabel)@(detail.Seat?.ColNumber)
+                                            </span>
+                                        }
+                                    </div>
+                                </div>
+                                <div class="col-md-2 text-center">
+                                    <span class="badge bg-@statusClass fs-6">@statusText</span>
+                                </div>
+                                <div class="col-md-2 text-center">
+                                    <div class="fw-bold text-danger">@booking.TotalPrice.ToString("N0") ₫</div>
+                                    <small class="text-muted">@booking.PaymentMethod</small>
+                                </div>
+                                <div class="col-md-2 text-center">
+                                    @if (booking.Status == "confirmed")
+                                    {
+                                        <a asp-controller="Booking" asp-action="Invoice" asp-route-id="@booking.Id"
+                                           class="btn btn-outline-danger btn-sm mb-1 d-block" target="_blank">
+                                            <i class="bi bi-file-earmark-text me-1"></i>Hoá đơn
+                                        </a>
+                                    }
+                                    @if (booking.Status == "pending")
+                                    {
+                                        <form method="post" asp-action="CancelBooking" asp-route-id="@booking.Id"
+                                              onsubmit="return confirm('Bạn có chắc muốn hủy vé này không?')">
+                                            <button type="submit" class="btn btn-outline-danger btn-sm d-block w-100">
+                                                <i class="bi bi-x-circle me-1"></i>Hủy vé
+                                            </button>
+                                        </form>
+                                    }
+                                    <small class="text-muted d-block mt-1">#@booking.Id</small>
+                                    <small class="text-muted">@booking.CreatedAt.ToString("dd/MM/yyyy")</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>

@@ -1,0 +1,258 @@
+@{
+    ViewData["Title"] = "Trang chủ";
+    var nowShowing = ViewBag.NowShowing as List<OnlineMovieBooking.Models.Movie> ?? new();
+    var comingSoon = ViewBag.ComingSoon as List<OnlineMovieBooking.Models.Movie> ?? new();
+}
+
+<!-- Hero Banner -->
+<div class="hero-banner position-relative overflow-hidden">
+    <div class="hero-cinema-bg"></div>
+    <div class="hero-seats-row"></div>
+
+    <div class="container position-relative" style="z-index:2;">
+        <div class="row align-items-center" style="min-height:calc(50vh - 60px);padding:3rem 0;">
+
+            <!-- Left -->
+            <div class="col-lg-6 col-xl-7">
+                <h1 class="hero-title text-white mb-1">Đặt vé phim<br><span class="text-danger">trực tuyến</span></h1>
+                <p class="hero-sub text-white mb-2">Dễ dàng &amp; nhanh chóng</p>
+                <p class="text-secondary mb-4" style="font-size:.95rem;">Chọn phim yêu thích, đặt chỗ ngay — Trải nghiệm rạp phim tốt nhất!</p>
+                <div class="d-flex gap-3 flex-wrap mb-4">
+                    <a asp-controller="Movies" asp-action="Index" asp-route-status="now_showing"
+                       class="btn btn-danger btn-lg px-4 fw-semibold">
+                        <i class="bi bi-ticket-perforated-fill me-2"></i>PHIM ĐANG CHIẾU &nbsp;→
+                    </a>
+                    <a asp-controller="Movies" asp-action="Schedule"
+                       class="btn btn-outline-light btn-lg px-4 fw-semibold">
+                        <i class="bi bi-calendar3 me-2"></i>LỊCH CHIẾU
+                    </a>
+                </div>
+                <!-- Stats -->
+                <div class="d-flex gap-0 flex-wrap">
+                    <div class="hero-stat-item">
+                        <div class="hero-stat-icon"><i class="bi bi-film"></i></div>
+                        <div>
+                            <div class="fw-bold text-white fs-5">100+</div>
+                            <small class="text-secondary">Phim chiếu</small>
+                        </div>
+                    </div>
+                    <div class="hero-stat-sep"></div>
+                    <div class="hero-stat-item">
+                        <div class="hero-stat-icon"><i class="bi bi-grid-3x3-gap-fill"></i></div>
+                        <div>
+                            <div class="fw-bold text-white fs-5">5</div>
+                            <small class="text-secondary">Phòng chiếu</small>
+                        </div>
+                    </div>
+                    <div class="hero-stat-sep"></div>
+                    <div class="hero-stat-item">
+                        <div class="hero-stat-icon"><i class="bi bi-people-fill"></i></div>
+                        <div>
+                            <div class="fw-bold text-white fs-5">1000+</div>
+                            <small class="text-secondary">Khách hàng</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right: Seat card -->
+            <div class="col-lg-6 col-xl-5 d-none d-lg-flex justify-content-center align-items-start position-relative pt-3">
+
+                <!-- Rating badge -->
+                <div class="hero-rating">
+                    <i class="bi bi-star-fill text-warning me-1"></i>
+                    <div>
+                        <div class="fw-bold text-white lh-1">4.9/5</div>
+                        <small class="text-secondary">Đánh giá</small>
+                    </div>
+                </div>
+
+                <!-- Seat map card -->
+                <div class="hero-seat-card">
+                    <div class="text-center mb-2" style="color:#888;font-size:.72rem;letter-spacing:3px;text-transform:uppercase;">Màn hình</div>
+                    <div class="hero-screen-bar mb-3"></div>
+                    <div class="hero-grid mb-3">
+                        @{
+                            var grid = new[]
+                            {
+                                new[]{0,0,0,0,0,0,0},
+                                new[]{0,0,0,0,0,0,0},
+                                new[]{0,0,1,1,1,0,0},
+                                new[]{0,1,1,1,1,1,0},
+                                new[]{0,0,1,1,1,0,0},
+                                new[]{0,0,0,0,0,0,0},
+                            };
+                        }
+                        @foreach (var row in grid)
+                        {
+                            <div class="hero-grid-row">
+                                @foreach (var s in row)
+                                {
+                                    if (s == 1)
+                                    { <span class="hg-seat hg-selected"></span> }
+                                    else
+                                    { <span class="hg-seat hg-empty"></span> }
+                                }
+                            </div>
+                        }
+                    </div>
+                    <div class="d-flex justify-content-center gap-3 mb-3" style="font-size:.75rem;color:#888;">
+                        <span class="d-flex align-items-center gap-1"><span class="hg-dot hg-empty"></span>Trống</span>
+                        <span class="d-flex align-items-center gap-1"><span class="hg-dot hg-selected"></span>Đang chọn</span>
+                        <span class="d-flex align-items-center gap-1"><span class="hg-dot hg-booked"></span>Đã đặt</span>
+                    </div>
+                    <a asp-controller="Movies" asp-action="Index" asp-route-status="now_showing"
+                       class="btn btn-danger w-100 fw-bold">
+                        <i class="bi bi-ticket-perforated-fill me-2"></i>ĐẶT VÉ NGAY
+                    </a>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- Now Showing -->
+<div class="container py-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold mb-0"><span class="text-danger border-start border-danger border-4 ps-2">Phim Đang Chiếu</span></h2>
+        <a asp-controller="Movies" asp-action="Index" asp-route-status="now_showing" class="btn btn-outline-danger btn-sm">Xem tất cả</a>
+    </div>
+    <div class="row g-4">
+        @foreach (var movie in nowShowing.Take(6))
+        {
+            <div class="col-6 col-md-4 col-lg-2">
+                <a asp-controller="Movies" asp-action="Details" asp-route-id="@movie.Id" class="text-decoration-none">
+                    <div class="movie-card card border-0 shadow-sm h-100 overflow-hidden">
+                        <div class="position-relative">
+                            @if (!string.IsNullOrEmpty(movie.PosterUrl))
+                            {
+                                <img src="@movie.PosterUrl" class="card-img-top" alt="@movie.Title" style="height:280px;object-fit:cover;" onerror="this.src='/images/no-poster.jpg'" />
+                            }
+                            else
+                            {
+                                <div class="bg-secondary d-flex align-items-center justify-content-center" style="height:280px;">
+                                    <i class="bi bi-film text-white fs-1"></i>
+                                </div>
+                            }
+                            <div class="poster-overlay position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center">
+                                <span class="btn btn-danger btn-sm"><i class="bi bi-info-circle me-1"></i>Chi tiết</span>
+                            </div>
+                        </div>
+                        <div class="card-body p-2">
+                            <h6 class="card-title mb-1 fw-bold text-truncate text-dark" title="@movie.Title">@movie.Title</h6>
+                            <small class="text-muted">@movie.Genre</small>
+                            <div class="mt-1"><small class="text-muted"><i class="bi bi-clock me-1"></i>@movie.DurationMin phút</small></div>
+                        </div>
+                    </div>
+                </a>
+            </div>
+        }
+    </div>
+</div>
+
+<!-- Coming Soon -->
+@if (comingSoon.Any())
+{
+    <div class="bg-light py-5">
+        <div class="container">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2 class="fw-bold mb-0"><span class="text-danger border-start border-danger border-4 ps-2">Phim Sắp Chiếu</span></h2>
+                <a asp-controller="Movies" asp-action="Index" asp-route-status="coming_soon" class="btn btn-outline-danger btn-sm">Xem tất cả</a>
+            </div>
+            <div class="row g-4">
+                @foreach (var movie in comingSoon.Take(4))
+                {
+                    <div class="col-6 col-md-3">
+                        <a asp-controller="Movies" asp-action="Details" asp-route-id="@movie.Id" class="text-decoration-none">
+                            <div class="movie-card card border-0 shadow-sm h-100 overflow-hidden">
+                                <div class="position-relative">
+                                    @if (!string.IsNullOrEmpty(movie.PosterUrl))
+                                    {
+                                        <img src="@movie.PosterUrl" class="card-img-top" alt="@movie.Title" style="height:300px;object-fit:cover;" onerror="this.src='/images/no-poster.jpg'" />
+                                    }
+                                    else
+                                    {
+                                        <div class="bg-secondary d-flex align-items-center justify-content-center" style="height:300px;">
+                                            <i class="bi bi-film text-white fs-1"></i>
+                                        </div>
+                                    }
+                                    <span class="badge bg-warning text-dark position-absolute top-0 end-0 m-2">Sắp chiếu</span>
+                                    <div class="poster-overlay position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center">
+                                        <span class="btn btn-light btn-sm"><i class="bi bi-info-circle me-1"></i>Chi tiết</span>
+                                    </div>
+                                </div>
+                                <div class="card-body p-2">
+                                    <h6 class="card-title mb-1 fw-bold text-truncate text-dark">@movie.Title</h6>
+                                    <small class="text-muted">@movie.Genre</small>
+                                    @if (movie.ReleaseDate.HasValue)
+                                    {
+                                        <div class="mt-1"><small class="text-danger"><i class="bi bi-calendar me-1"></i>@movie.ReleaseDate.Value.ToString("dd/MM/yyyy")</small></div>
+                                    }
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+}
+
+<!-- Member Benefits -->
+<div class="bg-dark text-white py-5">
+    <div class="container text-center">
+        <h2 class="fw-bold mb-2">Tại sao chọn MovieBooking?</h2>
+        <p class="mb-5" style="color:#aaa;">Trải nghiệm đặt vé xem phim nhanh chóng, tiện lợi và an toàn</p>
+        <div class="row g-4">
+            <div class="col-6 col-md-4 col-lg-2">
+                <div class="p-3">
+                    <div class="mb-3"><i class="bi bi-ticket-perforated text-danger" style="font-size:2.2rem;"></i></div>
+                    <h6 class="fw-bold mb-2">Đặt vé dễ dàng</h6>
+                    <p class="small mb-0" style="color:#bbb;">Chọn phim, chọn ghế và xác nhận chỉ trong 3 bước đơn giản</p>
+                </div>
+            </div>
+            <div class="col-6 col-md-4 col-lg-2">
+                <div class="p-3">
+                    <div class="mb-3"><i class="bi bi-geo-alt text-danger" style="font-size:2.2rem;"></i></div>
+                    <h6 class="fw-bold mb-2">Nhiều rạp chiếu</h6>
+                    <p class="small mb-0" style="color:#bbb;">Hệ thống rạp phủ khắp các tỉnh thành, dễ dàng tìm rạp gần bạn</p>
+                </div>
+            </div>
+            <div class="col-6 col-md-4 col-lg-2">
+                <div class="p-3">
+                    <div class="mb-3"><i class="bi bi-bell text-danger" style="font-size:2.2rem;"></i></div>
+                    <h6 class="fw-bold mb-2">Thông báo tức thì</h6>
+                    <p class="small mb-0" style="color:#bbb;">Nhận xác nhận đặt vé và cập nhật trạng thái ngay lập tức</p>
+                </div>
+            </div>
+            <div class="col-6 col-md-4 col-lg-2">
+                <div class="p-3">
+                    <div class="mb-3"><i class="bi bi-shield-check text-danger" style="font-size:2.2rem;"></i></div>
+                    <h6 class="fw-bold mb-2">Thanh toán an toàn</h6>
+                    <p class="small mb-0" style="color:#bbb;">Hỗ trợ COD, MoMo, VNPay — bảo mật tuyệt đối</p>
+                </div>
+            </div>
+            <div class="col-6 col-md-4 col-lg-2">
+                <div class="p-3">
+                    <div class="mb-3"><i class="bi bi-grid-3x3 text-danger" style="font-size:2.2rem;"></i></div>
+                    <h6 class="fw-bold mb-2">Chọn ghế trực quan</h6>
+                    <p class="small mb-0" style="color:#bbb;">Sơ đồ ghế trực tiếp, biết ngay ghế nào còn trống trước khi đặt</p>
+                </div>
+            </div>
+            <div class="col-6 col-md-4 col-lg-2">
+                <div class="p-3">
+                    <div class="mb-3"><i class="bi bi-arrow-counterclockwise text-danger" style="font-size:2.2rem;"></i></div>
+                    <h6 class="fw-bold mb-2">Hủy vé linh hoạt</h6>
+                    <p class="small mb-0" style="color:#bbb;">Dễ dàng hủy vé và theo dõi lịch sử đặt vé mọi lúc mọi nơi</p>
+                </div>
+            </div>
+        </div>
+        @if (User.Identity?.IsAuthenticated != true)
+        {
+            <a asp-controller="Account" asp-action="Register" class="btn btn-danger btn-lg mt-5 px-5">
+                <i class="bi bi-person-plus me-2"></i>Đăng ký miễn phí
+            </a>
+        }
+    </div>
+</div>

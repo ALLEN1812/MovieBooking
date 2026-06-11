@@ -1,0 +1,78 @@
+@model MovieFormViewModel
+@{
+    ViewData["Title"] = "Chỉnh sửa phim";
+    ViewData["ActiveMenu"] = "Movies";
+    Layout = "_AdminLayout";
+}
+
+<div class="card border-0 shadow-sm" style="max-width:700px;">
+    <div class="card-body p-4">
+        @if (!string.IsNullOrEmpty(Model.PosterUrl))
+        {
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Poster hiện tại</label>
+                <div><img src="@Model.PosterUrl" class="rounded" style="height:120px;object-fit:cover;" onerror="this.src='/images/no-poster.jpg'" /></div>
+            </div>
+        }
+        <form method="post" enctype="multipart/form-data">
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2"></div>
+            <input type="hidden" asp-for="Id" />
+            <div class="row g-3">
+                <div class="col-md-8">
+                    <label asp-for="Title" class="form-label fw-semibold">Tên phim <span class="text-danger">*</span></label>
+                    <input asp-for="Title" class="form-control" />
+                    <span asp-validation-for="Title" class="text-danger small"></span>
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="Genre" class="form-label fw-semibold">Thể loại</label>
+                    <input asp-for="Genre" class="form-control" />
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="DurationMin" class="form-label fw-semibold">Thời lượng (phút)</label>
+                    <input asp-for="DurationMin" class="form-control" type="number" />
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="Director" class="form-label fw-semibold">Đạo diễn</label>
+                    <input asp-for="Director" class="form-control" />
+                </div>
+                <div class="col-12">
+                    <label asp-for="TrailerUrl" class="form-label fw-semibold">Link trailer YouTube</label>
+                    <input asp-for="TrailerUrl" class="form-control" placeholder="https://www.youtube.com/watch?v=..." />
+                    <div class="form-text">Dán link YouTube, hệ thống tự nhúng vào trang chi tiết phim</div>
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="ReleaseDate" class="form-label fw-semibold">Ngày khởi chiếu</label>
+                    <input asp-for="ReleaseDate" class="form-control" type="date" />
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="Status" class="form-label fw-semibold">Trạng thái</label>
+                    <select asp-for="Status" class="form-select">
+                        <option value="now_showing">Đang chiếu</option>
+                        <option value="coming_soon">Sắp chiếu</option>
+                        <option value="hidden">Ẩn</option>
+                    </select>
+                </div>
+                <div class="col-12">
+                    <label asp-for="Description" class="form-label fw-semibold">Mô tả</label>
+                    <textarea asp-for="Description" class="form-control" rows="3"></textarea>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="PosterUrl" class="form-label fw-semibold">URL poster mới</label>
+                    <input asp-for="PosterUrl" class="form-control" placeholder="https://..." />
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="PosterFile" class="form-label fw-semibold">Hoặc upload ảnh mới</label>
+                    <input asp-for="PosterFile" class="form-control" type="file" accept="image/*" />
+                </div>
+            </div>
+            <div class="d-flex gap-2 mt-4">
+                <button type="submit" class="btn btn-danger"><i class="bi bi-save me-2"></i>Lưu thay đổi</button>
+                <a asp-action="Movies" class="btn btn-outline-secondary">Hủy</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

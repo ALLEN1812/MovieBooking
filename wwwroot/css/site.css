@@ -1,0 +1,213 @@
+/* ─── Hero Banner ─────────────────────────────────────────────── */
+.hero-banner {
+    background: #0c0806;
+    min-height: 50vh;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Cinema background image */
+.hero-cinema-bg {
+    position: absolute; inset: 0;
+    background-image: url('https://res.cloudinary.com/dec5fefrn/image/upload/v1781217809/moviebooking/assets/bg.png');
+    background-size: cover;
+    background-position: center 30%;
+    background-repeat: no-repeat;
+    /* Overlay tối để chữ dễ đọc */
+    filter: brightness(.55);
+}
+
+/* Gradient overlay phía dưới để blend với content */
+.hero-seats-row {
+    position: absolute; inset: 0;
+    background:
+        linear-gradient(to right, rgba(0,0,0,.55) 0%, rgba(0,0,0,.1) 50%, rgba(0,0,0,.15) 100%),
+        linear-gradient(to top, rgba(0,0,0,.7) 0%, transparent 50%);
+    pointer-events: none;
+}
+
+.min-vh-50 { min-height: 50vh; }
+
+/* Hero text */
+.hero-title { font-size: clamp(2.5rem, 5vw, 4rem); font-weight: 900; line-height: 1.08; }
+.hero-sub    { font-size: 1.25rem; font-weight: 600; opacity: .85; }
+
+/* Stats row */
+.hero-stat-item { display: flex; align-items: center; gap: .65rem; padding: .9rem 1.4rem; }
+.hero-stat-icon {
+    width: 42px; height: 42px; border-radius: 10px;
+    background: rgba(220,53,69,.2);
+    color: #dc3545; font-size: 1.1rem;
+    display: flex; align-items: center; justify-content: center;
+}
+.hero-stat-sep { width: 1px; height: 40px; background: rgba(255,255,255,.1); align-self: center; }
+
+/* ── Seat card ───────────────────────────────────────────────── */
+.hero-seat-card {
+    background: rgba(18,14,12,.88);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(255,255,255,.09);
+    border-radius: 20px;
+    padding: 1.4rem 1.6rem;
+    width: 280px;
+    box-shadow: 0 24px 60px rgba(0,0,0,.6);
+    position: relative; z-index: 2;
+}
+
+.hero-screen-bar {
+    height: 5px; border-radius: 3px;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,.25), transparent);
+}
+
+/* Seat grid */
+.hero-grid { display: flex; flex-direction: column; gap: 5px; align-items: center; }
+.hero-grid-row { display: flex; gap: 5px; }
+.hg-seat {
+    width: 28px; height: 24px; border-radius: 5px 5px 3px 3px;
+    display: inline-block;
+}
+.hg-empty    { background: #2a2a2a; }
+.hg-selected { background: #dc3545; box-shadow: 0 0 8px rgba(220,53,69,.5); }
+.hg-booked   { background: #555; }
+.hg-dot { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+
+/* Rating badge */
+.hero-rating {
+    position: absolute; top: 0; right: 0;
+    background: rgba(18,14,12,.9);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,.1);
+    border-radius: 12px;
+    padding: .5rem .85rem;
+    display: flex; align-items: center; gap: .5rem;
+    z-index: 3;
+}
+
+@keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
+.hero-seat-card { animation: float 5s ease-in-out infinite; }
+
+/* ─── Movie Cards ──────────────────────────────────────────────── */
+.movie-card { transition: transform .2s, box-shadow .2s; border-radius: 8px; }
+.movie-card:hover { transform: translateY(-4px); box-shadow: 0 8px 20px rgba(0,0,0,.15) !important; }
+.poster-overlay { background: rgba(0,0,0,0); transition: background .2s; opacity: 0; }
+.movie-card:hover .poster-overlay { background: rgba(0,0,0,.5); opacity: 1; }
+
+/* ─── Seat Map ─────────────────────────────────────────────────── */
+.seat-map { overflow-x: auto; padding-bottom: 1rem; }
+.seat {
+    width: 36px; height: 36px; border-radius: 6px; border: none;
+    font-size: 10px; font-weight: 600; cursor: pointer;
+    transition: all .15s; display: inline-flex; align-items: center; justify-content: center;
+}
+.standard-seat { background: #dee2e6; color: #333; }
+.standard-seat:hover { background: #dc3545; color: white; }
+.vip-seat { background: #ffc107; color: #333; }
+.vip-seat:hover { background: #dc3545; color: white; }
+.seat.booked { background: #6c757d; color: #aaa; cursor: not-allowed; }
+.seat.selected { background: #dc3545 !important; color: white !important; transform: scale(1.1); }
+.row-label { width: 20px; text-align: center; font-size: .8rem; }
+
+/* Admin seat management */
+.seat-admin {
+    width: 34px; height: 34px; border-radius: 5px; border: none;
+    font-size: 9px; font-weight: 600; cursor: pointer; transition: .15s;
+    display: inline-flex; align-items: center; justify-content: center;
+}
+.seat-standard { background: #6c757d; color: white; }
+.seat-standard:hover { background: #495057; }
+.seat-vip { background: #ffc107; color: #333; }
+.seat-vip:hover { background: #e0a800; }
+.seat-booked { background: #dc3545; color: white; cursor: default; }
+
+/* ─── Screen Display ───────────────────────────────────────────── */
+.screen-display {
+    background: linear-gradient(to bottom, #e0e0e0, #b0b0b0);
+    color: #333 !important;
+    font-size: .85rem;
+    letter-spacing: 3px;
+    box-shadow: 0 4px 15px rgba(0,0,0,.2);
+}
+
+/* ─── Seat Legend ──────────────────────────────────────────────── */
+.seat-legend { width: 20px; height: 20px; border-radius: 4px; }
+
+/* ─── Showtime Buttons ─────────────────────────────────────────── */
+.showtime-btn {
+    min-width: 100px; text-align: center; padding: .5rem .75rem;
+    border-radius: 8px;
+}
+
+/* ─── Payment Option ───────────────────────────────────────────── */
+.payment-option { cursor: pointer; transition: all .2s; }
+.payment-option:hover { border-color: #dc3545 !important; }
+
+/* ─── Utilities ────────────────────────────────────────────────── */
+.cursor-pointer { cursor: pointer; }
+
+/* ─── Animations ───────────────────────────────────────────────── */
+.fade-in { animation: fadeIn .3s ease-in; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+/* ─── Scrollbar ────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: #f1f1f1; }
+::-webkit-scrollbar-thumb { background: #aaa; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #888; }
+
+/* ─── Footer ───────────────────────────────────────────────────── */
+.footer-main { background: #0d0d0d; }
+.footer-top { border-bottom: 1px solid rgba(255,255,255,.07); }
+.footer-bottom { background: #070707; }
+
+.footer-brand { display: flex; align-items: center; }
+.footer-desc { color: #888; font-size: .875rem; line-height: 1.7; }
+
+.footer-heading {
+    color: #fff;
+    font-weight: 700;
+    font-size: .85rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 1rem;
+    padding-bottom: .5rem;
+    border-bottom: 2px solid #dc3545;
+    display: inline-block;
+}
+
+.footer-links { margin: 0; }
+.footer-links li { margin-bottom: .55rem; }
+.footer-links a {
+    color: #888;
+    text-decoration: none;
+    font-size: .875rem;
+    transition: color .2s, padding-left .2s;
+    display: inline-block;
+}
+.footer-links a:hover { color: #dc3545; padding-left: 4px; }
+
+.footer-contact { margin: 0; }
+.footer-contact li {
+    display: flex;
+    align-items: flex-start;
+    gap: .6rem;
+    margin-bottom: .7rem;
+    font-size: .875rem;
+    color: #999;
+}
+.footer-contact li i { margin-top: 2px; flex-shrink: 0; }
+.footer-contact a { color: #999; text-decoration: none; transition: color .2s; }
+.footer-contact a:hover { color: #dc3545; }
+
+.footer-social {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background: rgba(255,255,255,.07);
+    color: #aaa;
+    display: inline-flex; align-items: center; justify-content: center;
+    text-decoration: none;
+    font-size: 1rem;
+    transition: background .2s, color .2s, transform .2s;
+}
+.footer-social:hover { background: #dc3545; color: #fff; transform: translateY(-3px); }
+
+.footer-payment .badge { font-size: .78rem; }

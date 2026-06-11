@@ -1,0 +1,131 @@
+@model AdminDashboardViewModel
+@{
+    ViewData["Title"] = "Dashboard";
+    ViewData["ActiveMenu"] = "Dashboard";
+    Layout = "_AdminLayout";
+}
+
+<!-- Stats Cards -->
+<div class="row g-3 mb-4">
+    @{
+        var stats = new[] {
+            ("Người dùng", Model.TotalUsers.ToString(), "bi-people-fill", "primary"),
+            ("Phim", Model.TotalMovies.ToString(), "bi-film", "success"),
+            ("Đặt vé", Model.TotalBookings.ToString(), "bi-ticket-perforated", "warning"),
+            ("Suất chiếu", Model.TotalShowtimes.ToString(), "bi-calendar-event", "info")
+        };
+    }
+    @foreach (var (label, value, icon, color) in stats)
+    {
+        <div class="col-6 col-md-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body d-flex align-items-center gap-3">
+                    <div class="rounded-circle bg-@color bg-opacity-10 d-flex align-items-center justify-content-center" style="width:50px;height:50px;flex-shrink:0;">
+                        <i class="bi @icon text-@color fs-4"></i>
+                    </div>
+                    <div>
+                        <div class="fs-4 fw-bold">@value</div>
+                        <small class="text-muted">@label</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+<div class="row g-3 mb-4">
+    <!-- Booking Status -->
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <h6 class="fw-bold mb-3">Trạng thái đặt vé</h6>
+                <div class="d-flex justify-content-between mb-2">
+                    <span><span class="badge bg-warning text-dark me-1">●</span>Chờ xác nhận</span>
+                    <strong>@Model.PendingBookings</strong>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                    <span><span class="badge bg-success me-1">●</span>Đã xác nhận</span>
+                    <strong>@Model.ConfirmedBookings</strong>
+                </div>
+                <div class="d-flex justify-content-between mb-3">
+                    <span><span class="badge bg-danger me-1">●</span>Đã hủy</span>
+                    <strong>@Model.CancelledBookings</strong>
+                </div>
+                <div class="border-top pt-2">
+                    <div class="d-flex justify-content-between">
+                        <strong>Doanh thu xác nhận:</strong>
+                        <strong class="text-success">@Model.TotalRevenue.ToString("N0") ₫</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <h6 class="fw-bold mb-3">Thao tác nhanh</h6>
+                <div class="d-grid gap-2">
+                    <a asp-action="CreateMovie" class="btn btn-outline-primary btn-sm text-start"><i class="bi bi-plus-circle me-2"></i>Thêm phim mới</a>
+                    <a asp-action="CreateShowtime" class="btn btn-outline-success btn-sm text-start"><i class="bi bi-plus-circle me-2"></i>Thêm suất chiếu</a>
+                    <a asp-action="Bookings" class="btn btn-outline-warning btn-sm text-start"><i class="bi bi-clock me-2"></i>Xem đặt vé chờ xác nhận</a>
+                    <a asp-action="Users" class="btn btn-outline-info btn-sm text-start"><i class="bi bi-people me-2"></i>Quản lý người dùng</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Bookings -->
+<div class="card border-0 shadow-sm">
+    <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h6 class="fw-bold mb-0">Đặt vé gần đây</h6>
+            <a asp-action="Bookings" class="btn btn-sm btn-outline-secondary">Xem tất cả</a>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>#</th>
+                        <th>Khách hàng</th>
+                        <th>Phim</th>
+                        <th>Ghế</th>
+                        <th>Tổng tiền</th>
+                        <th>Thanh toán</th>
+                        <th>Trạng thái</th>
+                        <th>Ngày</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var b in Model.RecentBookings)
+                    {
+                        <tr>
+                            <td><strong>#@b.Id</strong></td>
+                            <td>
+                                <div class="fw-semibold">@b.User?.Name</div>
+                                <small class="text-muted">@b.User?.Email</small>
+                            </td>
+                            <td>
+                                <small>@b.Showtime?.Movie?.Title</small><br/>
+                                <small class="text-muted">@b.Showtime?.StartTime.ToString("HH:mm dd/MM")</small>
+                            </td>
+                            <td><small>@b.BookingDetails.Count ghế</small></td>
+                            <td class="fw-semibold">@b.TotalPrice.ToString("N0") ₫</td>
+                            <td><small>@b.PaymentMethod</small></td>
+                            <td>
+                                @{
+                                    var cls = b.Status switch { "confirmed" => "success", "cancelled" => "danger", _ => "warning" };
+                                    var txt = b.Status switch { "confirmed" => "Xác nhận", "cancelled" => "Đã hủy", _ => "Chờ xử lý" };
+                                }
+                                <span class="badge bg-@cls">@txt</span>
+                            </td>
+                            <td><small class="text-muted">@b.CreatedAt.ToString("dd/MM/yy")</small></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

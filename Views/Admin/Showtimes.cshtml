@@ -1,0 +1,61 @@
+@model List<Showtime>
+@{
+    ViewData["Title"] = "Quản lý suất chiếu";
+    ViewData["ActiveMenu"] = "Showtimes";
+    Layout = "_AdminLayout";
+}
+
+<div class="d-flex justify-content-end mb-3">
+    <a asp-action="CreateShowtime" class="btn btn-danger btn-sm"><i class="bi bi-plus-lg me-1"></i>Thêm suất chiếu</a>
+</div>
+
+<div class="card border-0 shadow-sm">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-dark">
+                    <tr>
+                        <th>#</th>
+                        <th>Phim</th>
+                        <th>Phòng chiếu</th>
+                        <th>Rạp</th>
+                        <th>Giờ chiếu</th>
+                        <th>Giá</th>
+                        <th>Phụ đề</th>
+                        <th class="text-center">Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var s in Model)
+                    {
+                        <tr>
+                            <td><strong>#@s.Id</strong></td>
+                            <td><strong class="small">@s.Movie?.Title</strong></td>
+                            <td><small>@s.Room?.Name</small></td>
+                            <td><small>@s.Room?.Cinema?.Name</small></td>
+                            <td>
+                                <small class="fw-semibold">@s.StartTime.ToString("HH:mm")</small><br/>
+                                <small class="text-muted">@s.StartTime.ToString("dd/MM/yyyy")</small>
+                            </td>
+                            <td><small>@s.Price.ToString("N0") ₫</small></td>
+                            <td><small class="badge bg-secondary">@s.Subtitle</small></td>
+                            <td class="text-center">
+                                <a asp-action="EditShowtime" asp-route-id="@s.Id" class="btn btn-sm btn-outline-primary me-1">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                <form method="post" asp-action="DeleteShowtime" asp-route-id="@s.Id" class="d-inline"
+                                      onsubmit="return confirm('Xóa suất chiếu này?')">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        @if (!Model.Any())
+        {
+            <div class="text-center py-5 text-muted"><i class="bi bi-calendar-x fs-1 d-block mb-2"></i>Không có suất chiếu nào</div>
+        }
+    </div>
+</div>

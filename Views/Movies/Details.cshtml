@@ -1,0 +1,133 @@
+@model Movie
+@{
+    ViewData["Title"] = Model.Title;
+    var showtimes = ViewBag.Showtimes as List<Showtime> ?? new();
+    var grouped = showtimes.GroupBy(s => s.StartTime.Date).OrderBy(g => g.Key);
+
+    string? embedUrl = null;
+    if (!string.IsNullOrEmpty(Model.TrailerUrl))
+    {
+        var m = System.Text.RegularExpressions.Regex.Match(Model.TrailerUrl,
+            @"(?:youtube\.com/watch\?v=|youtu\.be/)([\w\-]+)");
+        if (m.Success) embedUrl = $"https://www.youtube.com/embed/{m.Groups[1].Value}?rel=0&modestbranding=1";
+    }
+}
+
+<div class="bg-dark py-4">
+    <div class="container">
+        <div class="row g-4 align-items-start">
+            <div class="col-md-3 col-lg-2">
+                @if (!string.IsNullOrEmpty(Model.PosterUrl))
+                {
+                    <img src="@Model.PosterUrl" class="img-fluid rounded shadow" alt="@Model.Title" onerror="this.src='/images/no-poster.jpg'" />
+                }
+                else
+                {
+                    <div class="bg-secondary rounded d-flex align-items-center justify-content-center" style="height:300px;">
+                        <i class="bi bi-film text-white fs-1"></i>
+                    </div>
+                }
+            </div>
+            <div class="col-md-9 col-lg-10 text-white">
+                <div class="mb-2">
+                    <span class="badge @(Model.Status == "now_showing" ? "bg-success" : "bg-warning text-dark") me-2">
+                        @(Model.Status == "now_showing" ? "Đang chiếu" : "Sắp chiếu")
+                    </span>
+                    @if (!string.IsNullOrEmpty(Model.Genre))
+                    {
+                        <span class="badge bg-secondary">@Model.Genre</span>
+                    }
+                </div>
+                <h1 class="fw-bold mb-3">@Model.Title</h1>
+                <div class="d-flex flex-wrap gap-3 mb-3 text-muted">
+                    <span><i class="bi bi-clock me-1"></i>@Model.DurationMin phút</span>
+                    @if (!string.IsNullOrEmpty(Model.Director))
+                    {
+                        <span><i class="bi bi-camera-video me-1"></i>@Model.Director</span>
+                    }
+                    @if (Model.ReleaseDate.HasValue)
+                    {
+                        <span><i class="bi bi-calendar me-1"></i>@Model.ReleaseDate.Value.ToString("dd/MM/yyyy")</span>
+                    }
+                </div>
+                @if (!string.IsNullOrEmpty(Model.Description))
+                {
+                    <p class="text-light">@Model.Description</p>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container py-4">
+
+    @if (embedUrl != null)
+    {
+        <div class="mb-5">
+            <h4 class="fw-bold mb-3 border-start border-danger border-3 ps-2">Trailer</h4>
+            <div class="ratio ratio-16x9 rounded overflow-hidden shadow" style="max-width:720px;">
+                <iframe src="@embedUrl" title="Trailer @Model.Title" allowfullscreen
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>
+            </div>
+        </div>
+    }
+
+    @if (Model.Status == "now_showing" && showtimes.Any())
+    {
+        <h4 class="fw-bold mb-4 border-start border-danger border-3 ps-2">Lịch chiếu</h4>
+        @foreach (var day in grouped)
+        {
+            <div class="mb-4">
+                <h6 class="fw-bold text-muted mb-3">
+                    <i class="bi bi-calendar-event me-2"></i>
+                    @day.Key.ToString("dddd, dd/MM/yyyy")
+                </h6>
+                <div class="d-flex flex-wrap gap-2">
+                    @foreach (var showtime in day.OrderBy(s => s.StartTime))
+                    {
+                        @if (User.Identity?.IsAuthenticated == true)
+                        {
+                            <a asp-controller="Booking" asp-action="Seats" asp-route-showtimeId="@showtime.Id"
+                               class="btn btn-outline-danger showtime-btn">
+                                <div class="fw-bold">@showtime.StartTime.ToString("HH:mm")</div>
+                                <small class="d-block">@showtime.Room?.Cinema?.Name</small>
+                                <small class="d-block text-muted">@showtime.Room?.Name</small>
+                                @if (!string.IsNullOrEmpty(showtime.Subtitle))
+                                {
+                                    <small class="badge bg-secondary mt-1">@showtime.Subtitle</small>
+                                }
+                            </a>
+                        }
+                        else
+                        {
+                            <a asp-controller="Account" asp-action="Login" asp-route-returnUrl="/Booking/Seats/@showtime.Id"
+                               class="btn btn-outline-danger showtime-btn">
+                                <div class="fw-bold">@showtime.StartTime.ToString("HH:mm")</div>
+                                <small class="d-block">@showtime.Room?.Cinema?.Name</small>
+                                <small class="d-block text-muted">@showtime.Room?.Name</small>
+                            </a>
+                        }
+                    }
+                </div>
+            </div>
+        }
+    }
+    else if (Model.Status == "coming_soon")
+    {
+        <div class="text-center py-5">
+            <i class="bi bi-calendar-check text-warning fs-1"></i>
+            <h5 class="mt-3">Phim sắp ra mắt</h5>
+            @if (Model.ReleaseDate.HasValue)
+            {
+                <p class="text-muted">Dự kiến khởi chiếu: <strong>@Model.ReleaseDate.Value.ToString("dd/MM/yyyy")</strong></p>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="text-center py-5">
+            <i class="bi bi-calendar-x text-muted fs-1"></i>
+            <h5 class="mt-3 text-muted">Chưa có lịch chiếu</h5>
+        </div>
+    }
+</div>

@@ -1,0 +1,158 @@
+@model SeatMapViewModel
+@{
+    ViewData["Title"] = "Chọn ghế ngồi";
+    var seatsByRow = Model.Seats.GroupBy(s => s.RowLabel).OrderBy(g => g.Key);
+}
+
+<div class="bg-dark text-white py-3">
+    <div class="container">
+        <div class="d-flex align-items-center gap-3">
+            <a asp-controller="Movies" asp-action="Details" asp-route-id="@Model.Showtime.MovieId" class="btn btn-sm btn-outline-light">
+                <i class="bi bi-arrow-left"></i>
+            </a>
+            <div>
+                <h5 class="mb-0 fw-bold">@Model.Showtime.Movie.Title</h5>
+                <small class="text-muted">
+                    @Model.Showtime.StartTime.ToString("HH:mm - dddd, dd/MM/yyyy") |
+                    @Model.RoomName | @Model.Showtime.Room.Cinema.Name
+                    @if (!string.IsNullOrEmpty(Model.Showtime.Subtitle))
+                    {
+                        <span class="badge bg-secondary ms-1">@Model.Showtime.Subtitle</span>
+                    }
+                </small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container py-4">
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <!-- Screen -->
+            <div class="text-center mb-4">
+                <div class="screen-display bg-gradient rounded text-white py-2 px-5 d-inline-block mb-2 fw-bold">MÀN HÌNH</div>
+                <div class="screen-glow"></div>
+            </div>
+
+            <!-- Legend -->
+            <div class="d-flex justify-content-center gap-3 mb-3 flex-wrap">
+                <div class="d-flex align-items-center gap-1"><div class="seat-legend bg-light border"></div><small>Thường</small></div>
+                <div class="d-flex align-items-center gap-1"><div class="seat-legend bg-warning"></div><small>VIP</small></div>
+                <div class="d-flex align-items-center gap-1"><div class="seat-legend bg-danger"></div><small>Đã chọn</small></div>
+                <div class="d-flex align-items-center gap-1"><div class="seat-legend bg-secondary"></div><small>Đã đặt</small></div>
+            </div>
+
+            <!-- Seat Map -->
+            <div class="seat-map">
+                @foreach (var row in seatsByRow)
+                {
+                    <div class="d-flex align-items-center justify-content-center gap-1 mb-1">
+                        <span class="row-label fw-bold text-muted me-2">@row.Key</span>
+                        @foreach (var seat in row.OrderBy(s => s.ColNumber))
+                        {
+                            <button type="button"
+                                    class="seat @(seat.IsBooked ? "booked" : seat.Type == "vip" ? "vip-seat" : "standard-seat")"
+                                    data-seat-id="@seat.Id"
+                                    data-seat-label="@(seat.RowLabel + seat.ColNumber)"
+                                    data-seat-type="@seat.Type"
+                                    data-price="@(seat.Type == "vip" ? 120000 : 90000)"
+                                    @(seat.IsBooked ? "disabled" : "")
+                                    title="@(seat.RowLabel + seat.ColNumber) - @(seat.Type == "vip" ? "VIP" : "Thường")">
+                                @(seat.RowLabel + seat.ColNumber)
+                            </button>
+                        }
+                        <span class="row-label fw-bold text-muted ms-2">@row.Key</span>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- Summary Panel -->
+        <div class="col-lg-4">
+            <div class="card shadow border-0 sticky-top" style="top:80px;">
+                <div class="card-body">
+                    <h6 class="fw-bold mb-3 border-bottom pb-2">Thông tin đặt vé</h6>
+                    <div class="movie-info mb-3">
+                        <strong>@Model.Showtime.Movie.Title</strong>
+                        <div class="text-muted small mt-1">
+                            <div><i class="bi bi-clock me-1"></i>@Model.Showtime.StartTime.ToString("HH:mm dd/MM/yyyy")</div>
+                            <div><i class="bi bi-building me-1"></i>@Model.RoomName</div>
+                        </div>
+                    </div>
+
+                    <div id="selected-seats-info">
+                        <p class="text-muted small" id="no-seat-msg">Chưa chọn ghế nào</p>
+                        <div id="seat-tags" class="mb-2"></div>
+                    </div>
+
+                    <div class="border-top pt-2 mt-2">
+                        <div class="d-flex justify-content-between fw-bold fs-5">
+                            <span>Tổng tiền:</span>
+                            <span class="text-danger" id="total-price">0 ₫</span>
+                        </div>
+                    </div>
+
+                    <a id="proceed-btn" href="#" class="btn btn-danger w-100 mt-3 disabled fw-bold">
+                        <i class="bi bi-ticket me-2"></i>Tiếp tục
+                    </a>
+                    <div id="seat-count-badge" class="text-center text-muted small mt-1">Chọn tối đa 8 ghế</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const selectedSeats = {};
+        const showtimeId = @Model.Showtime.Id;
+
+        document.querySelectorAll('.seat:not(.booked)').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const id = btn.dataset.seatId;
+                if (selectedSeats[id]) {
+                    delete selectedSeats[id];
+                    btn.classList.remove('selected');
+                } else {
+                    if (Object.keys(selectedSeats).length >= 8) {
+                        alert('Bạn chỉ có thể chọn tối đa 8 ghế!');
+                        return;
+                    }
+                    selectedSeats[id] = {
+                        label: btn.dataset.seatLabel,
+                        type: btn.dataset.seatType,
+                        price: parseInt(btn.dataset.price)
+                    };
+                    btn.classList.add('selected');
+                }
+                updateSummary();
+            });
+        });
+
+        function updateSummary() {
+            const seats = Object.values(selectedSeats);
+            const total = seats.reduce((s, x) => s + x.price, 0);
+            const tagsEl = document.getElementById('seat-tags');
+            const noMsg = document.getElementById('no-seat-msg');
+            const proceedBtn = document.getElementById('proceed-btn');
+
+            tagsEl.innerHTML = seats.map(s =>
+                `<span class="badge ${s.type === 'vip' ? 'bg-warning text-dark' : 'bg-secondary'} me-1 mb-1">
+                    ${s.label} - ${s.price.toLocaleString('vi-VN')} ₫
+                </span>`
+            ).join('');
+
+            noMsg.style.display = seats.length ? 'none' : '';
+            document.getElementById('total-price').textContent = total.toLocaleString('vi-VN') + ' ₫';
+
+            if (seats.length > 0) {
+                const ids = Object.keys(selectedSeats).join(',');
+                proceedBtn.href = `/Booking/Confirm?showtimeId=${showtimeId}&seatIds=${ids}`;
+                proceedBtn.classList.remove('disabled');
+            } else {
+                proceedBtn.href = '#';
+                proceedBtn.classList.add('disabled');
+            }
+        }
+    </script>
+}

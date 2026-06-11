@@ -1,0 +1,151 @@
+@model List<Booking>
+@{
+    ViewData["Title"] = "Quản lý đặt vé";
+    ViewData["ActiveMenu"] = "Bookings";
+    Layout = "_AdminLayout";
+    var status   = ViewBag.Status as string;
+    var cinemaId = ViewBag.CinemaId as int?;
+    var fromVal  = ViewBag.From as string ?? "";
+    var toVal    = ViewBag.To   as string ?? "";
+    var cinemas  = ViewBag.Cinemas as List<OnlineMovieBooking.Models.Cinema> ?? new();
+}
+
+<!-- Status tabs -->
+<div class="d-flex gap-2 mb-3 flex-wrap align-items-center">
+    <a asp-action="Bookings" asp-route-cinemaId="@cinemaId" asp-route-from="@fromVal" asp-route-to="@toVal"
+       class="btn btn-sm @(string.IsNullOrEmpty(status) ? "btn-dark" : "btn-outline-secondary")">Tất cả</a>
+    <a asp-action="Bookings" asp-route-status="pending" asp-route-cinemaId="@cinemaId" asp-route-from="@fromVal" asp-route-to="@toVal"
+       class="btn btn-sm @(status == "pending" ? "btn-warning" : "btn-outline-warning")">Chờ xác nhận</a>
+    <a asp-action="Bookings" asp-route-status="confirmed" asp-route-cinemaId="@cinemaId" asp-route-from="@fromVal" asp-route-to="@toVal"
+       class="btn btn-sm @(status == "confirmed" ? "btn-success" : "btn-outline-success")">Đã xác nhận</a>
+    <a asp-action="Bookings" asp-route-status="cancelled" asp-route-cinemaId="@cinemaId" asp-route-from="@fromVal" asp-route-to="@toVal"
+       class="btn btn-sm @(status == "cancelled" ? "btn-danger" : "btn-outline-danger")">Đã hủy</a>
+    <span class="ms-auto badge bg-secondary align-self-center">@Model.Count đặt vé</span>
+</div>
+
+<!-- Filters -->
+<form method="get" class="card border-0 shadow-sm mb-3">
+    <div class="card-body py-2 px-3">
+        <div class="row g-2 align-items-end">
+            <input type="hidden" name="status" value="@status" />
+            <div class="col-md-4">
+                <label class="form-label small mb-1 fw-semibold">Rạp chiếu</label>
+                <select name="cinemaId" class="form-select form-select-sm">
+                    <option value="">-- Tất cả rạp --</option>
+                    @foreach (var c in cinemas)
+                    {
+                        if (cinemaId == c.Id)
+                        { <option value="@c.Id" selected="selected">@c.Name</option> }
+                        else
+                        { <option value="@c.Id">@c.Name</option> }
+                    }
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label small mb-1 fw-semibold">Từ ngày</label>
+                <input type="date" name="from" class="form-control form-control-sm" value="@fromVal" />
+            </div>
+            <div class="col-md-3">
+                <label class="form-label small mb-1 fw-semibold">Đến ngày</label>
+                <input type="date" name="to" class="form-control form-control-sm" value="@toVal" />
+            </div>
+            <div class="col-md-2 d-flex gap-1">
+                <button type="submit" class="btn btn-dark btn-sm flex-grow-1"><i class="bi bi-funnel me-1"></i>Lọc</button>
+                <a asp-action="Bookings" asp-route-status="@status" class="btn btn-outline-secondary btn-sm" title="Xóa bộ lọc"><i class="bi bi-x-lg"></i></a>
+            </div>
+        </div>
+    </div>
+</form>
+
+<div class="card border-0 shadow-sm">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-dark">
+                    <tr>
+                        <th>#</th>
+                        <th>Khách hàng</th>
+                        <th>Phim</th>
+                        <th>Suất chiếu</th>
+                        <th>Ghế</th>
+                        <th>Tổng tiền</th>
+                        <th>Thanh toán</th>
+                        <th class="text-center">Bill</th>
+                        <th>Trạng thái</th>
+                        <th>Ngày</th>
+                        <th class="text-center">Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var b in Model)
+                    {
+                        var statusClass = b.Status switch { "confirmed" => "success", "cancelled" => "danger", _ => "warning" };
+                        var statusText = b.Status switch { "confirmed" => "Xác nhận", "cancelled" => "Đã hủy", _ => "Chờ xử lý" };
+                        <tr>
+                            <td><strong>#@b.Id</strong></td>
+                            <td>
+                                <div class="fw-semibold small">@b.User?.Name</div>
+                                <small class="text-muted">@b.Phone</small>
+                            </td>
+                            <td><small class="fw-semibold">@b.Showtime?.Movie?.Title</small></td>
+                            <td>
+                                <small>@b.Showtime?.StartTime.ToString("HH:mm")</small><br/>
+                                <small class="text-muted">@b.Showtime?.StartTime.ToString("dd/MM/yy")</small>
+                            </td>
+                            <td>
+                                <small>
+                                    @string.Join(", ", b.BookingDetails.Select(d => $"{d.Seat?.RowLabel}{d.Seat?.ColNumber}"))
+                                </small>
+                            </td>
+                            <td class="fw-semibold small">@b.TotalPrice.ToString("N0") ₫</td>
+                            <td><small>@b.PaymentMethod</small></td>
+                            <td class="text-center">
+                                @if (!string.IsNullOrEmpty(b.BillImageUrl))
+                                {
+                                    <a href="@b.BillImageUrl" target="_blank" title="Xem ảnh bill">
+                                        <img src="@b.BillImageUrl" style="width:40px;height:40px;object-fit:cover;border-radius:6px;border:1px solid #ddd;" />
+                                    </a>
+                                }
+                                else
+                                {
+                                    <span class="text-muted small">—</span>
+                                }
+                            </td>
+                            <td><span class="badge bg-@statusClass">@statusText</span></td>
+                            <td><small class="text-muted">@b.CreatedAt.ToString("dd/MM/yy")</small></td>
+                            <td class="text-center">
+                                @if (b.Status == "pending")
+                                {
+                                    <form method="post" asp-action="UpdateBookingStatus" class="d-inline">
+                                        <input type="hidden" name="id" value="@b.Id" />
+                                        <button type="submit" name="status" value="confirmed" class="btn btn-sm btn-success py-0 me-1" title="Xác nhận">
+                                            <i class="bi bi-check-lg"></i>
+                                        </button>
+                                        <button type="submit" name="status" value="cancelled" class="btn btn-sm btn-danger py-0" title="Hủy"
+                                                onclick="return confirm('Hủy đặt vé #@b.Id?')">
+                                            <i class="bi bi-x-lg"></i>
+                                        </button>
+                                    </form>
+                                }
+                                @if (b.Status == "confirmed")
+                                {
+                                    <form method="post" asp-action="UpdateBookingStatus" class="d-inline">
+                                        <input type="hidden" name="id" value="@b.Id" />
+                                        <button type="submit" name="status" value="cancelled" class="btn btn-sm btn-outline-danger py-0"
+                                                onclick="return confirm('Hủy đặt vé đã xác nhận #@b.Id?')">
+                                            <i class="bi bi-x-circle"></i>
+                                        </button>
+                                    </form>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        @if (!Model.Any())
+        {
+            <div class="text-center py-5 text-muted"><i class="bi bi-ticket-perforated fs-1 d-block mb-2"></i>Không có đặt vé nào</div>
+        }
+    </div>
+</div>

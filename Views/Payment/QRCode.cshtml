@@ -1,0 +1,270 @@
+@model OnlineMovieBooking.Models.Booking
+@{
+    ViewData["Title"] = "Thanh toán MoMo";
+    var qrUrl       = ViewBag.QRUrl as string ?? "";
+    var amount      = (long)(ViewBag.Amount ?? 0);
+    var addInfo     = ViewBag.AddInfo as string ?? "";
+    var accountNo   = ViewBag.AccountNo as string ?? "";
+    var accountName = ViewBag.AccountName as string ?? "";
+}
+
+@section Styles {
+<style>
+    .qr-wrapper { max-width: 520px; margin: 0 auto; }
+    .qr-img-box { background: #fff; border-radius: 16px; padding: 1.2rem; display: inline-block; box-shadow: 0 4px 24px rgba(0,0,0,.12); }
+    .qr-img-box img { width: 220px; height: 220px; display: block; }
+    .info-row { display: flex; justify-content: space-between; align-items: center; padding: .55rem 0; border-bottom: 1px solid #f0f0f0; }
+    .info-row:last-child { border-bottom: none; }
+    .info-label { color: #888; font-size: .85rem; white-space: nowrap; }
+    .info-value { font-weight: 700; font-size: .92rem; text-align: right; }
+    .copy-btn { border: none; background: none; color: #ae2d68; font-size: .78rem; padding: .1rem .45rem; cursor: pointer; flex-shrink: 0; }
+    .copy-btn:hover { text-decoration: underline; }
+    .status-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 6px; flex-shrink: 0; background: #ffc107; animation: pulse 1.4s infinite; }
+    .status-dot.confirmed { background: #28a745; animation: none; }
+    @@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+    .momo-badge { background: linear-gradient(135deg,#a50064,#d82d8b); color: #fff; border-radius: 8px; padding: .35rem 1rem; font-weight: 700; font-size: .88rem; display: inline-flex; align-items: center; gap: 8px; }
+    .upload-zone { border: 2px dashed #dee2e6; border-radius: 12px; padding: 1.5rem 1rem; text-align: center; cursor: pointer; transition: .2s; background: #fafafa; }
+    .upload-zone:hover, .upload-zone.dragover { border-color: #ae2d68; background: #fdf0f6; }
+    .upload-zone input[type=file] { display: none; }
+    .bill-preview { max-width: 100%; max-height: 200px; border-radius: 8px; object-fit: contain; display: none; margin: .75rem auto 0; }
+    .warning-list li { padding: .4rem 0; border-bottom: 1px solid rgba(255,193,7,.15); }
+    .warning-list li:last-child { border-bottom: none; }
+    .countdown-badge { font-size: .8rem; color: #888; font-variant-numeric: tabular-nums; }
+</style>
+}
+
+<div class="bg-dark text-white py-3">
+    <div class="container">
+        <h5 class="mb-0 fw-bold"><i class="bi bi-qr-code-scan me-2"></i>Thanh toán MoMo</h5>
+    </div>
+</div>
+
+<div class="container py-4">
+    <div class="qr-wrapper">
+
+        <!-- Trạng thái -->
+        <div id="statusBox" class="alert alert-warning d-flex align-items-center mb-4">
+            <span class="status-dot" id="statusDot"></span>
+            <span id="statusText">Đang chờ xác nhận thanh toán...</span>
+            <span class="ms-auto countdown-badge" id="countdown"></span>
+        </div>
+
+        <!-- QR Card -->
+        <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-3">
+            <div class="card-body p-4">
+
+                <div class="text-center mb-3">
+                    <span class="momo-badge"><i class="bi bi-wallet2"></i>Chuyển khoản MoMo</span>
+                </div>
+
+                <div class="text-center mb-4">
+                    <div class="qr-img-box">
+                        <img src="@qrUrl" alt="QR MoMo" id="qrImg"
+                             onerror="this.src='https://placehold.co/220x220?text=QR+Error'" />
+                    </div>
+                    <p class="text-muted small mt-2 mb-0">Mở app <strong>MoMo</strong> → Quét mã → Thanh toán</p>
+                </div>
+
+                <!-- Transfer info -->
+                <div class="px-1">
+                    <div class="info-row">
+                        <span class="info-label">Số điện thoại</span>
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="info-value">@accountNo</span>
+                            <button class="copy-btn" onclick="copyText('@accountNo','Đã sao chép số điện thoại!')"><i class="bi bi-copy"></i></button>
+                        </div>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Chủ tài khoản</span>
+                        <span class="info-value">@accountName</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Số tiền</span>
+                        <span class="info-value text-danger fs-5">@amount.ToString("N0") ₫</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Nội dung chuyển</span>
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="info-value text-danger">@addInfo</span>
+                            <button class="copy-btn" onclick="copyText('@addInfo','Đã sao chép nội dung!')"><i class="bi bi-copy"></i></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Upload bill -->
+        <div class="card border-0 shadow-sm rounded-4 mb-3">
+            <div class="card-body p-4">
+                <h6 class="fw-bold mb-1"><i class="bi bi-image me-2 text-danger"></i>Tải ảnh bill chuyển khoản</h6>
+                <p class="text-muted small mb-3">Gửi ảnh chụp màn hình xác nhận chuyển tiền để chúng tôi xử lý nhanh hơn</p>
+
+                <div class="upload-zone" id="uploadZone" onclick="document.getElementById('billFile').click()">
+                    <input type="file" id="billFile" accept="image/jpeg,image/png,image/webp" onchange="previewAndUpload(this)" />
+                    <div id="uploadPrompt">
+                        <i class="bi bi-cloud-upload text-danger" style="font-size:2rem;"></i>
+                        <p class="mb-1 fw-semibold mt-2">Nhấn để chọn ảnh</p>
+                        <p class="text-muted small mb-0">JPG, PNG, WEBP — tối đa 5MB</p>
+                    </div>
+                    <img id="billPreview" class="bill-preview" alt="Bill preview" />
+                </div>
+
+                <div id="uploadStatus" class="mt-2 small"></div>
+            </div>
+        </div>
+
+        <!-- Cảnh báo -->
+        <div class="card border-0 rounded-4 mb-3" style="background:#fffbeb;border:1.5px solid #fde68a !important;">
+            <div class="card-body p-3">
+                <div class="fw-bold mb-2 text-warning-emphasis"><i class="bi bi-exclamation-triangle-fill me-2 text-warning"></i>Lưu ý quan trọng</div>
+                <ul class="list-unstyled mb-0 warning-list small">
+                    <li><i class="bi bi-x-circle-fill text-danger me-2"></i><strong>Không chuyển tiền lần 2</strong> — Mỗi đơn chỉ cần chuyển 1 lần duy nhất</li>
+                    <li><i class="bi bi-clock-fill text-warning me-2"></i>Đơn đặt vé sẽ được xử lý trong vòng <strong>24 giờ</strong> sau khi nhận được thanh toán</li>
+                    <li><i class="bi bi-chat-dots-fill text-info me-2"></i>Mọi thắc mắc vui lòng liên hệ hotline <strong>@(ViewBag.BankId)</strong> hoặc email hỗ trợ</li>
+                    <li><i class="bi bi-shield-check-fill text-success me-2"></i>Nhập <strong>đúng nội dung chuyển khoản</strong> để hệ thống tự khớp đơn</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Close notice -->
+        <div class="card border-0 rounded-4 mb-3" style="background:#f0f7ff;border:1px solid #bee3f8 !important;">
+            <div class="card-body py-3 px-4 d-flex align-items-center gap-3">
+                <i class="bi bi-info-circle-fill text-primary fs-5 flex-shrink-0"></i>
+                <div class="small flex-grow-1">
+                    Bạn có thể <strong>đóng trang này</strong> và quay lại sau.<br>
+                    Chi tiết đơn đặt vé luôn có trong <a asp-controller="Profile" asp-action="Bookings" class="text-primary fw-semibold">Lịch sử đặt vé</a>.
+                </div>
+                <a asp-controller="Profile" asp-action="Bookings" class="btn btn-sm btn-outline-primary flex-shrink-0">
+                    <i class="bi bi-ticket me-1"></i>Xem lịch sử
+                </a>
+            </div>
+        </div>
+
+        <!-- Booking summary -->
+        <div class="card border-0 bg-light rounded-4 mb-3">
+            <div class="card-body py-3 px-4">
+                <div class="small text-muted mb-1">Đơn đặt vé <strong>#@Model.Id</strong></div>
+                <div class="fw-semibold">@Model.Showtime?.Movie?.Title</div>
+                <div class="small text-muted">
+                    <i class="bi bi-clock me-1"></i>@Model.Showtime?.StartTime.ToString("HH:mm - dd/MM/yyyy")
+                    &nbsp;|&nbsp; @Model.Showtime?.Room?.Name &nbsp;|&nbsp; @Model.Showtime?.Room?.Cinema?.Name
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- Toast -->
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index:9999">
+    <div class="toast align-items-center text-bg-dark border-0" id="toastEl">
+        <div class="d-flex">
+            <div class="toast-body" id="toastMsg"></div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    const bookingId = @Model.Id;
+    const successUrl = '/Booking/Success/' + bookingId;
+    let secondsLeft = 15 * 60;
+
+    // Countdown
+    const cdEl = document.getElementById('countdown');
+    function tick() {
+        if (secondsLeft <= 0) { cdEl.textContent = 'Hết thời gian'; return; }
+        const m = String(Math.floor(secondsLeft / 60)).padStart(2, '0');
+        const s = String(secondsLeft % 60).padStart(2, '0');
+        cdEl.textContent = 'Còn ' + m + ':' + s;
+        secondsLeft--;
+    }
+    tick();
+    const cdTimer = setInterval(tick, 1000);
+
+    // Polling
+    async function checkStatus() {
+        try {
+            const r = await fetch('/Payment/QRStatus?bookingId=' + bookingId);
+            const d = await r.json();
+            if (d.status === 'confirmed') {
+                clearInterval(pollTimer); clearInterval(cdTimer);
+                document.getElementById('statusDot').classList.add('confirmed');
+                document.getElementById('statusBox').className = 'alert alert-success d-flex align-items-center mb-4';
+                document.getElementById('statusText').textContent = 'Thanh toán xác nhận thành công! Đang chuyển hướng...';
+                cdEl.textContent = '';
+                setTimeout(() => window.location.href = successUrl, 1800);
+            } else if (d.status === 'cancelled') {
+                clearInterval(pollTimer);
+                document.getElementById('statusBox').className = 'alert alert-danger d-flex align-items-center mb-4';
+                document.getElementById('statusText').textContent = 'Đơn đặt vé đã bị hủy.';
+            }
+        } catch (e) {}
+    }
+    const pollTimer = setInterval(checkStatus, 3000);
+
+    // Upload bill
+    async function previewAndUpload(input) {
+        const file = input.files[0];
+        if (!file) return;
+
+        // Preview
+        const reader = new FileReader();
+        reader.onload = e => {
+            const img = document.getElementById('billPreview');
+            img.src = e.target.result;
+            img.style.display = 'block';
+            document.getElementById('uploadPrompt').style.display = 'none';
+        };
+        reader.readAsDataURL(file);
+
+        // Upload
+        setUploadStatus('loading', 'Đang tải ảnh lên...');
+        const form = new FormData();
+        form.append('bookingId', bookingId);
+        form.append('bill', file);
+
+        try {
+            const res = await fetch('/Payment/UploadBill', {
+                method: 'POST',
+                headers: { 'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value ?? '' },
+                body: form
+            });
+            const data = await res.json();
+            if (data.success) {
+                setUploadStatus('success', '✓ Đã gửi ảnh bill thành công! Admin sẽ xác nhận sớm nhất có thể.');
+            } else {
+                setUploadStatus('error', '✗ ' + data.message);
+            }
+        } catch (e) {
+            setUploadStatus('error', '✗ Lỗi kết nối, vui lòng thử lại.');
+        }
+    }
+
+    function setUploadStatus(type, msg) {
+        const el = document.getElementById('uploadStatus');
+        const cls = { loading: 'text-secondary', success: 'text-success fw-semibold', error: 'text-danger' };
+        el.className = cls[type] || '';
+        el.textContent = msg;
+    }
+
+    // Drag & drop
+    const zone = document.getElementById('uploadZone');
+    zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('dragover'); });
+    zone.addEventListener('dragleave', () => zone.classList.remove('dragover'));
+    zone.addEventListener('drop', e => {
+        e.preventDefault(); zone.classList.remove('dragover');
+        const f = e.dataTransfer.files[0];
+        if (f) { document.getElementById('billFile').files = e.dataTransfer.files; previewAndUpload(document.getElementById('billFile')); }
+    });
+
+    // Copy helper
+    function copyText(text, msg) {
+        navigator.clipboard.writeText(text).then(() => {
+            document.getElementById('toastMsg').textContent = msg;
+            new bootstrap.Toast(document.getElementById('toastEl'), { delay: 2000 }).show();
+        });
+    }
+</script>
+@Html.AntiForgeryToken()
+}

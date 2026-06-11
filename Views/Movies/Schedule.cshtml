@@ -1,0 +1,221 @@
+@{
+    ViewData["Title"] = "Lịch chiếu";
+    var cinemas = ViewBag.Cinemas as List<OnlineMovieBooking.Models.Cinema> ?? new();
+    var cinema = ViewBag.Cinema as OnlineMovieBooking.Models.Cinema;
+    var dates = ViewBag.Dates as List<DateTime> ?? new();
+    var selectedDate = ViewBag.SelectedDate is DateTime sd ? sd : DateTime.Today;
+    var grouped = ViewBag.GroupedShowtimes as List<IGrouping<int, OnlineMovieBooking.Models.Showtime>> ?? new();
+
+    string DayName(DateTime d) => d.DayOfWeek switch {
+        DayOfWeek.Monday    => "Thứ Hai",
+        DayOfWeek.Tuesday   => "Thứ Ba",
+        DayOfWeek.Wednesday => "Thứ Tư",
+        DayOfWeek.Thursday  => "Thứ Năm",
+        DayOfWeek.Friday    => "Thứ Sáu",
+        DayOfWeek.Saturday  => "Thứ Bảy",
+        _                   => "Chủ Nhật"
+    };
+}
+
+@section Styles {
+<style>
+    .cinema-card { position: relative; overflow: hidden; border-radius: 10px; cursor: pointer; height: 240px; }
+    .cinema-card img { width: 100%; height: 100%; object-fit: cover; object-position: center center; transition: transform .4s; display: block; }
+    .cinema-card:hover img { transform: scale(1.06); }
+    .cinema-card .overlay { position: absolute; bottom: 0; left: 0; right: 0; height: 55%; background: linear-gradient(to bottom, transparent, rgba(0,0,0,.82)); padding: 1rem 1rem .85rem; display: flex; flex-direction: column; justify-content: flex-end; }
+    .cinema-card .cinema-name { color: #ff6b1a; font-weight: 700; font-size: .95rem; text-transform: uppercase; letter-spacing: .5px; line-height: 1.3; }
+    .cinema-card .cinema-addr { color: #ddd; font-size: .78rem; margin-top: .2rem; }
+    .cinema-card .cinema-hotline { color: #ddd; font-size: .78rem; margin-top: .15rem; }
+
+    .date-tab { border: none; background: none; padding: .5rem 1rem; font-size: .85rem; font-weight: 600; color: #555; border-bottom: 3px solid transparent; transition: .2s; white-space: nowrap; }
+    .date-tab:hover { color: #e74c3c; }
+    .date-tab.active { color: #e74c3c; border-bottom-color: #e74c3c; }
+    .date-tab .day-name { display: block; font-size: .7rem; text-transform: uppercase; }
+
+    .showtime-btn { border: 2px solid #e74c3c; color: #e74c3c; background: transparent; border-radius: 6px;
+        padding: .35rem .8rem; font-weight: 700; font-size: .9rem; transition: .2s; white-space: nowrap; }
+    .showtime-btn:hover { background: #e74c3c; color: #fff; }
+
+    .movie-row { border-bottom: 1px solid #eee; padding: 1.2rem 0; }
+    .movie-row:last-child { border-bottom: none; }
+    .tag { display: inline-block; border: 1px solid #e74c3c; color: #e74c3c; border-radius: 4px;
+        padding: .1rem .4rem; font-size: .75rem; font-weight: 600; margin-right: .25rem; }
+
+    .cinema-header { border: 2px solid #e74c3c; border-radius: 10px; padding: 1.2rem 1.5rem; margin-bottom: 1.5rem; text-align: center; }
+    .cinema-header .cinema-title { color: #e74c3c; font-size: 1.4rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; }
+    .cinema-header .cinema-sub { color: #555; font-size: .85rem; margin-top: .25rem; }
+</style>
+}
+
+<!-- Banner -->
+<div class="bg-dark text-white py-3">
+    <div class="container">
+        @if (cinema != null)
+        {
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-1">
+                    <li class="breadcrumb-item"><a href="/" class="text-muted text-decoration-none">Trang chủ</a></li>
+                    <li class="breadcrumb-item"><a asp-action="Schedule" class="text-muted text-decoration-none">Lịch chiếu</a></li>
+                    <li class="breadcrumb-item active text-white">@cinema.Name</li>
+                </ol>
+            </nav>
+            <h2 class="fw-bold mb-0">@cinema.Name</h2>
+        }
+        else
+        {
+            <h2 class="fw-bold mb-0">Lịch chiếu</h2>
+        }
+    </div>
+</div>
+
+<div class="container py-4">
+
+@if (cinema == null)
+{
+    <!-- Cinema list -->
+    <p class="text-muted mb-4">Chọn rạp để xem lịch chiếu phim</p>
+    @if (!cinemas.Any())
+    {
+        <div class="text-center py-5 text-muted">
+            <i class="bi bi-building fs-1 d-block mb-2"></i>
+            <p>Chưa có rạp chiếu nào</p>
+        </div>
+    }
+    else
+    {
+        <div class="row g-4">
+            @foreach (var c in cinemas)
+            {
+                <div class="col-md-6">
+                    <a asp-action="Schedule" asp-route-cinemaId="@c.Id" class="text-decoration-none d-block cinema-card shadow">
+                        @if (!string.IsNullOrEmpty(c.ImageUrl))
+                        {
+                            <img src="@c.ImageUrl" alt="@c.Name" onerror="this.src='/images/no-poster.jpg'" />
+                        }
+                        else
+                        {
+                            <div class="bg-secondary d-flex align-items-center justify-content-center w-100 h-100 position-absolute top-0 start-0">
+                                <i class="bi bi-building text-white" style="font-size:3rem;"></i>
+                            </div>
+                        }
+                        <div class="overlay">
+                            <div class="cinema-name">@c.Name</div>
+                            @if (!string.IsNullOrEmpty(c.Location))
+                            {
+                                <div class="cinema-addr"><i class="bi bi-geo-alt me-1"></i>@c.Location</div>
+                            }
+                            @if (!string.IsNullOrEmpty(c.Hotline))
+                            {
+                                <div class="cinema-hotline"><i class="bi bi-telephone me-1"></i>Hotline: @c.Hotline</div>
+                            }
+                        </div>
+                    </a>
+                </div>
+            }
+        </div>
+    }
+}
+else
+{
+    <!-- Cinema detail + schedule -->
+    <div class="cinema-header">
+        <div class="cinema-title">@cinema.Name</div>
+        @if (!string.IsNullOrEmpty(cinema.Hotline))
+        {
+            <div class="cinema-sub">@cinema.Hotline</div>
+        }
+        @if (!string.IsNullOrEmpty(cinema.Location))
+        {
+            <div class="cinema-sub">@cinema.Location</div>
+        }
+    </div>
+
+    <!-- Date tabs -->
+    <div class="border-bottom mb-4 d-flex gap-1 overflow-auto">
+        @foreach (var d in dates)
+        {
+            var isActive = d.Date == selectedDate.Date;
+            <a asp-action="Schedule" asp-route-cinemaId="@cinema.Id" asp-route-date="@d.ToString("yyyy-MM-dd")"
+               class="date-tab @(isActive ? "active" : "")">
+                <span class="day-name">@DayName(d)</span>
+                @d.ToString("dd/MM")
+            </a>
+        }
+    </div>
+
+    <!-- Movie list for selected date -->
+    @if (!grouped.Any())
+    {
+        <div class="text-center py-5 text-muted">
+            <i class="bi bi-calendar-x fs-1 d-block mb-2"></i>
+            <p>Không có suất chiếu nào vào ngày này</p>
+        </div>
+    }
+    else
+    {
+        @foreach (var group in grouped)
+        {
+            var firstShow = group.First();
+            var movie = firstShow.Movie;
+            <div class="movie-row">
+                <div class="row g-3 align-items-start">
+                    <div class="col-auto">
+                        @if (!string.IsNullOrEmpty(movie?.PosterUrl))
+                        {
+                            <img src="@movie.PosterUrl" alt="@movie.Title"
+                                 style="width:80px;height:115px;object-fit:cover;border-radius:6px;"
+                                 onerror="this.src='/images/no-poster.jpg'" />
+                        }
+                        else
+                        {
+                            <div class="bg-secondary rounded d-flex align-items-center justify-content-center" style="width:80px;height:115px;">
+                                <i class="bi bi-film text-white fs-4"></i>
+                            </div>
+                        }
+                    </div>
+                    <div class="col">
+                        <div class="mb-1">
+                            <a asp-controller="Movies" asp-action="Details" asp-route-id="@movie?.Id"
+                               class="fw-bold text-dark text-decoration-none fs-6">@movie?.Title</a>
+                            <span class="tag ms-1">2D</span>
+                            @if (!string.IsNullOrEmpty(firstShow.Subtitle))
+                            {
+                                <span class="tag">@firstShow.Subtitle</span>
+                            }
+                        </div>
+                        @if (!string.IsNullOrEmpty(movie?.Genre))
+                        {
+                            <div class="text-muted small mb-1">@movie.Genre</div>
+                        }
+                        @if (!string.IsNullOrEmpty(movie?.Director))
+                        {
+                            <div class="small mb-1"><span class="text-danger">Đạo diễn:</span> @movie.Director</div>
+                        }
+                        @if (!string.IsNullOrEmpty(movie?.Description))
+                        {
+                            var desc = movie.Description.Length > 120 ? movie.Description[..120] + "..." : movie.Description;
+                            <div class="small text-muted mb-2">@desc</div>
+                        }
+                        <div class="d-flex flex-wrap gap-2">
+                            @foreach (var show in group.OrderBy(s => s.StartTime))
+                            {
+                                @if (User.Identity?.IsAuthenticated == true)
+                                {
+                                    <a asp-controller="Booking" asp-action="Seats" asp-route-showtimeId="@show.Id"
+                                       class="showtime-btn">@show.StartTime.ToString("HH:mm")</a>
+                                }
+                                else
+                                {
+                                    <a asp-controller="Account" asp-action="Login" asp-route-returnUrl="/Booking/Seats/@show.Id"
+                                       class="showtime-btn">@show.StartTime.ToString("HH:mm")</a>
+                                }
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    }
+}
+
+</div>

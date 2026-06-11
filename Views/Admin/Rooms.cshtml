@@ -1,0 +1,64 @@
+@model List<Room>
+@{
+    ViewData["Title"] = "Quản lý phòng chiếu";
+    ViewData["ActiveMenu"] = "Rooms";
+    Layout = "_AdminLayout";
+    var cinemas = ViewBag.Cinemas as List<OnlineMovieBooking.Models.Cinema> ?? new();
+    var cinemaId = ViewBag.CinemaId as int?;
+}
+
+<div class="d-flex gap-2 mb-3 flex-wrap align-items-center">
+    <form method="get" class="d-flex gap-2 flex-wrap flex-grow-1">
+        <select name="cinemaId" class="form-select form-select-sm" style="max-width:220px;" onchange="this.form.submit()">
+            <option value="">-- Tất cả rạp --</option>
+            @foreach (var c in cinemas)
+            {
+                if (cinemaId == c.Id)
+                { <option value="@c.Id" selected="selected">@c.Name</option> }
+                else
+                { <option value="@c.Id">@c.Name</option> }
+            }
+        </select>
+    </form>
+    <a asp-action="CreateRoom" class="btn btn-danger btn-sm ms-auto"><i class="bi bi-plus-lg me-1"></i>Thêm phòng chiếu</a>
+</div>
+
+<div class="card border-0 shadow-sm">
+    <div class="card-body p-0">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-dark">
+                <tr>
+                    <th>#</th>
+                    <th>Tên phòng</th>
+                    <th>Rạp</th>
+                    <th>Số hàng</th>
+                    <th>Số cột</th>
+                    <th>Tổng ghế</th>
+                    <th class="text-center">Thao tác</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var room in Model)
+                {
+                    <tr>
+                        <td>@room.Id</td>
+                        <td><strong>@room.Name</strong></td>
+                        <td><small>@room.Cinema?.Name</small></td>
+                        <td>@room.TotalRows</td>
+                        <td>@room.TotalCols</td>
+                        <td><span class="badge bg-info text-dark">@(room.TotalRows * room.TotalCols) ghế</span></td>
+                        <td class="text-center">
+                            <a asp-action="Seats" asp-route-roomId="@room.Id" class="btn btn-sm btn-outline-info me-1" title="Quản lý ghế">
+                                <i class="bi bi-grid-3x3"></i>
+                            </a>
+                            <form method="post" asp-action="DeleteRoom" asp-route-id="@room.Id" class="d-inline"
+                                  onsubmit="return confirm('Xóa phòng chiếu @room.Name? Tất cả ghế sẽ bị xóa.')">
+                                <button type="submit" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

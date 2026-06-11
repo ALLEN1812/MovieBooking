@@ -1,0 +1,53 @@
+@model List<Seat>
+@{
+    ViewData["Title"] = "Quản lý ghế - " + (ViewBag.Room as Room)?.Name;
+    ViewData["ActiveMenu"] = "Rooms";
+    Layout = "_AdminLayout";
+    var room = ViewBag.Room as Room;
+    var seatsByRow = Model.GroupBy(s => s.RowLabel).OrderBy(g => g.Key);
+}
+
+<div class="d-flex align-items-center gap-3 mb-4">
+    <a asp-action="Rooms" class="btn btn-sm btn-outline-secondary"><i class="bi bi-arrow-left"></i></a>
+    <div>
+        <h6 class="mb-0 fw-bold">@room?.Name - @room?.Cinema?.Name</h6>
+        <small class="text-muted">@Model.Count ghế | @Model.Count(s => s.Type == "vip") VIP | @Model.Count(s => s.Type == "standard") Thường</small>
+    </div>
+</div>
+
+<!-- Legend -->
+<div class="d-flex gap-3 mb-3">
+    <div class="d-flex align-items-center gap-1"><div style="width:20px;height:20px;background:#6c757d;border-radius:4px;"></div><small>Thường</small></div>
+    <div class="d-flex align-items-center gap-1"><div style="width:20px;height:20px;background:#ffc107;border-radius:4px;"></div><small>VIP</small></div>
+    <div class="d-flex align-items-center gap-1"><div style="width:20px;height:20px;background:#dc3545;border-radius:4px;"></div><small>Đã đặt</small></div>
+</div>
+
+<div class="card border-0 shadow-sm">
+    <div class="card-body">
+        <!-- Screen -->
+        <div class="text-center mb-4">
+            <div class="screen-display bg-gradient rounded text-white py-2 px-5 d-inline-block fw-bold">MÀN HÌNH</div>
+        </div>
+
+        @foreach (var row in seatsByRow)
+        {
+            <div class="d-flex align-items-center gap-1 mb-2 justify-content-center">
+                <span class="fw-bold text-muted me-2" style="width:20px;">@row.Key</span>
+                @foreach (var seat in row.OrderBy(s => s.ColNumber))
+                {
+                    <form method="post" asp-action="UpdateSeatType" asp-route-roomId="@room?.Id" class="d-inline">
+                        <input type="hidden" name="id" value="@seat.Id" />
+                        <input type="hidden" name="roomId" value="@room?.Id" />
+                        <button type="submit" name="type" value="@(seat.Type == "vip" ? "standard" : "vip")"
+                                class="seat-admin @(seat.IsBooked ? "seat-booked" : seat.Type == "vip" ? "seat-vip" : "seat-standard")"
+                                title="@(seat.RowLabel + seat.ColNumber) - @(seat.Type == "vip" ? "VIP" : "Thường") | Click để đổi loại">
+                            @(seat.RowLabel)@(seat.ColNumber)
+                        </button>
+                    </form>
+                }
+                <span class="fw-bold text-muted ms-2" style="width:20px;">@row.Key</span>
+            </div>
+        }
+        <p class="text-muted text-center small mt-3"><i class="bi bi-info-circle me-1"></i>Click vào ghế để chuyển đổi giữa Thường và VIP</p>
+    </div>
+</div>
