@@ -48,7 +48,21 @@ dotnet restore
 dotnet run
 ```
 
-Ứng dụng sẽ tự động tạo database và dữ liệu mẫu khi khởi động lần đầu.
+Ứng dụng tự động tạo schema database khi khởi động lần đầu. Dừng lại sau khi thấy dòng `Now listening on...`
+
+### Bước 5 — Nạp dữ liệu mẫu
+
+```bash
+sqlcmd -S localhost -d MovieBookingDb -E -C -i seed_data.sql
+```
+
+> File `seed_data.sql` chứa sẵn: 5 rạp, 9 phim, 6 người dùng, 12 phòng, 462 ghế, 25 suất chiếu, 16 đặt vé mẫu.
+
+### Bước 6 — Chạy lại ứng dụng
+
+```bash
+dotnet run
+```
 
 Truy cập: **http://localhost:5000** (hoặc cổng hiển thị trong terminal)
 
